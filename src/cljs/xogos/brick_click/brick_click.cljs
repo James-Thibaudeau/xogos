@@ -84,7 +84,7 @@
   (every?
     (fn [row]
       (every? #(and
-                 (= (:clicks-left 0))
+                 (= (:clicks-left %) 0)
                  (nil? (:loot %)))
               row))
     grid))
@@ -135,11 +135,10 @@
         {:keys [type value]} loot]
     (if (> clicks-left 0)
       (destroy-brick! @game-state x y)
-      (if loot
-        (do
-          (loot-brick! @game-state type value x y)
-          (when (level-complete? (:grid @game-state))
-            (new-level! @game-state)))))))
+      (when loot
+        (loot-brick! @game-state type value x y)))
+    (when (level-complete? (:grid @game-state))
+      (new-level! @game-state))))
 
 (defn brick-cell [clicks-left loot x y]
   [:div {:on-click #(click-brick x y)
