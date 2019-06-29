@@ -1,12 +1,11 @@
 (ns xogos.core
   (:require
-   [reagent.core :as reagent]
-   [re-frame.core :as re-frame]
-   [xogos.events :as events]
-   [xogos.routes :as routes]
-   [xogos.views :as views]
-   [xogos.config :as config]
-   ))
+    [reagent.core :as reagent]
+    [re-frame.core :as re-frame]
+    [xogos.events :as events]
+    [xogos.routes :as routes]
+    [xogos.views :as views]
+    [xogos.config :as config]))
 
 
 (defn dev-setup []

@@ -2,19 +2,18 @@
   (:require-macros [secretary.core :refer [defroute]])
   (:import goog.History)
   (:require
-   [secretary.core :as secretary]
-   [goog.events :as gevents]
-   [goog.history.EventType :as EventType]
-   [re-frame.core :as re-frame]
-   [xogos.events :as events]
-   ))
+    [secretary.core :as secretary]
+    [goog.events :as gevents]
+    [goog.history.EventType :as EventType]
+    [re-frame.core :as re-frame]
+    [xogos.events :as events]))
 
 (defn hook-browser-navigation! []
   (doto (History.)
     (gevents/listen
-     EventType/NAVIGATE
-     (fn [event]
-       (secretary/dispatch! (.-token event))))
+      EventType/NAVIGATE
+      (fn [event]
+        (secretary/dispatch! (.-token event))))
     (.setEnabled true)))
 
 (defn app-routes []
@@ -22,11 +21,15 @@
   ;; --------------------
   ;; define routes here
   (defroute "/" []
-    (re-frame/dispatch [::events/set-active-panel :home-panel])
-    )
-
-  (defroute "/about" []
-    (re-frame/dispatch [::events/set-active-panel :about-panel]))
+            (re-frame/dispatch [::events/set-active-panel :brick-click]))
+  (defroute "/brick-click" []
+            (re-frame/dispatch [::events/set-active-panel :brick-click]))
+  (defroute "/elevator" []
+            (re-frame/dispatch [::events/set-active-panel :elevator]))
+  (defroute "/shifter" []
+            (re-frame/dispatch [::events/set-active-panel :shifter]))
+  (defroute "/tic-tac-toe" []
+            (re-frame/dispatch [::events/set-active-panel :shifter]))
 
 
   ;; --------------------

@@ -2,14 +2,18 @@
   (:require
     [clojure.string :as s]
     [reagent.core :as reagent]
+    [re-frame.core :as re-frame]
+    [secretary.core :as sec]
+    [xogos.events :as events]
+    [xogos.subs :as subs]
     [xogos.brick-click.brick-click :as bc]
     [xogos.elevator.elevator :as elevator]
     [xogos.shifter.shifter :as shifter]
     [xogos.tic-tac-toe.tic-tac-toe :as ttt]))
 
-(def games [:brickClick :shifter :elevator :tic-tac-toe])
+(def games [:brick-click :shifter :elevator :tic-tac-toe])
 
-(defn nav-bar [game]
+(defn nav-bar []
   (let [menu-open? (reagent/atom false)]
     (fn []
       [:nav.navbar
@@ -25,18 +29,18 @@
          [:div.navbar-end
           (map (fn [g]
                  ^{:key g} [:a.navbar-item
-                            {:on-click #(reset! game g)}
+                            {:on-click #(re-frame/dispatch [::events/set-active-panel g])}
                             (s/capitalize (name g))])
                games)]]]])))
 
 
 (defn main-panel []
-  (let [game (reagent/atom :brickClick)]
+  (let [game (re-frame/subscribe [::subs/active-panel])]
     (fn []
       [:div.container.is-fluid
-       [nav-bar game]
+       [nav-bar]
        (case @game
-         :brickClick
+         :brick-click
          [bc/brick-click]
          :shifter
          [shifter/shifter]
