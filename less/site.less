@@ -1,3 +1,47 @@
-body {
-    color:red;
+.game-board {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  width: 40vw;
+  height: 40vw;
+}
+
+.button-cell {
+  position: relative;
+  display: flex;
+  flex: 0 0 32%;
+  justify-content: center;
+  align-items: center;
+  min-height: 10vw;
+  min-width: 10vw;
+  margin-bottom: 0.5vw;
+  border: 1px solid;
+  border-radius: 2px;
+  border-color: gray;
+  box-shadow: 1px 1px gray;
+}
+
+.button-cell:after {
+    content: "";
+    display: block;
+    padding-bottom: 100%
+}
+
+.cell-content {
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  color: white;
+}
+
+.X {
+  background-color: #0099ff;
+}
+
+.O {
+  background-color: #00cc33;
+}
+
+.active-cell {
+  border: 2px solid white;
 }
