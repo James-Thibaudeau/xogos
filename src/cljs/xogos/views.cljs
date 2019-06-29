@@ -32,8 +32,7 @@
                             (s/capitalize (name g))])
                games)]]]])))
 
-
-(defn main-panel []
+(defn games-panel []
   (let [game (re-frame/subscribe [::subs/active-panel])]
     (fn []
       [:div.container.is-fluid
@@ -47,3 +46,30 @@
          [elevator/elevator]
          :tic-tac-toe
          [ttt/tic-tac-toe])])))
+
+(defn user-panel []
+  (let [user-name (reagent/atom nil)]
+    (fn []
+      [:div.container.is-fluid
+       [:h1.title "Welcome to Xogos"]
+       [:p "Before you can play these amazing games, enter a user name!"]
+       [:p "This is a one time signup to create a user local to your browser."]
+       [:div
+        [:div.field
+         [:label {:for "user-name"} "Username"]
+         [:div.control
+          [:input#user-name.input
+           {:value @user-name
+            :onChange #(reset! user-name (-> % .-target .-value))}]]]
+        [:div.field
+         [:button.button.is-primary
+          {:on-click #(re-frame/dispatch [::events/create-user @user-name])}
+          "Submit"]]]])))
+
+
+(defn main-panel []
+  (let [user (re-frame/subscribe [::subs/user])]
+    (fn []
+      (if @user
+        [games-panel]
+        [user-panel]))))
