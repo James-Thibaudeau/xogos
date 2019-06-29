@@ -13,8 +13,8 @@
 (defn toggle-sound []
   (swap! game-state update :sound? not))
 
-(defn play-sound [sound]
-  (when (:sound? @game-state)
+(defn play-sound! [state sound]
+  (when (:sound? state)
     (.play sound)))
 
 (def minable-loot [:bone :uranium :bronze-ankh :silver-ankh
@@ -65,7 +65,7 @@
 
 (defn brick [_ _]
   {:id (random-uuid)
-   :clicks-left 3
+   :clicks-left 1
    :loot (random-loot)})
 
 
@@ -80,52 +80,66 @@
                                                  :gold-hammer 1}
                                :sound? true}))
 
-(defn level-complete? []
+(defn level-complete? [grid]
   (every?
     (fn [row]
       (every? #(and
                  (= (:clicks-left 0))
-                 (nil? (:loot %))) row))
-    (:grid @game-state)))
-
-(defn new-level! []
-  (let [level (:level @game-state)]
-    (swap! game-state assoc
-           :grid (common/make-grid 10 10 brick)
-           :level (inc level))))
+                 (nil? (:loot %)))
+              row))
+    grid))
 
 (defn get-brick [x y]
   (get-in @game-state [:grid x y]))
 
-(defn update-inventory [key value]
-  (swap! game-state update-in [:inventory key] #(+ % value)))
+(defn new-grid [state]
+  (assoc state :grid (common/make-grid 10 10 brick)))
 
-(defn loot-brick [x y]
-  (swap! game-state update-in [:grid x y :loot] #(identity nil)))
+(defn inc-level [state]
+  (update state :level inc))
 
-(defn dec-clicks [x y]
-  (swap!
-    game-state
-    update-in
-    [:grid x y]
-    (fn [data]
-      (update data :clicks-left dec))))
+(defn dec-clicks [state x y]
+  (update-in state [:grid x y :clicks-left] dec))
+
+(defn loot-brick [state x y]
+  (update-in state [:grid x y :loot] #(identity nil)))
+
+(defn update-inventory [state key value]
+  (update-in state [:inventory key] #(+ % value)))
+
+(defn update-game-state! [new-state]
+  (swap! game-state merge new-state))
+
+(defn new-level! [state]
+  (play-sound! state level-up)
+  (-> state 
+      new-grid
+      inc-level
+      update-game-state!))
+
+(defn destroy-brick! [state x y]
+  (play-sound! state break-sound)
+  (-> state
+      (dec-clicks x y)
+      update-game-state!))
+
+(defn loot-brick! [state type value x y]
+  (play-sound! state loot-sound)
+  (-> state
+      (update-inventory type value)
+      (loot-brick x y)
+      update-game-state!))
 
 (defn click-brick [x y]
   (let [{:keys [clicks-left loot]} (get-brick x y)
         {:keys [type value]} loot]
     (if (> clicks-left 0)
-      (do
-        (play-sound break-sound)
-        (dec-clicks x y))
+      (destroy-brick! @game-state x y)
       (if loot
         (do
-          (play-sound loot-sound)
-          (update-inventory type value)
-          (loot-brick x y)
-          (when (level-complete?)
-            (play-sound level-up)
-            (new-level!)))))))
+          (loot-brick! @game-state type value x y)
+          (when (level-complete? (:grid @game-state))
+            (new-level! @game-state)))))))
 
 (defn brick-cell [clicks-left loot x y]
   [:div {:on-click #(click-brick x y)

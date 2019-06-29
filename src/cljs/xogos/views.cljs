@@ -3,7 +3,6 @@
     [clojure.string :as s]
     [reagent.core :as reagent]
     [re-frame.core :as re-frame]
-    [secretary.core :as sec]
     [xogos.events :as events]
     [xogos.subs :as subs]
     [xogos.brick-click.brick-click :as bc]
@@ -48,6 +47,3 @@
          [elevator/elevator]
          :tic-tac-toe
          [ttt/tic-tac-toe])])))
-
-
-
