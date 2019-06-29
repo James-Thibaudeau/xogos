@@ -1,0 +1,13 @@
+/*.log
+/target
+/*-init.clj
+/resources/public/js/compiled
+out
+.rebel_readline_history
+*.iml
+/.idea
+.DS_Store
+src/.DS_Store
+.nrepl-port
+pom.xml
+pom.xml.asc
