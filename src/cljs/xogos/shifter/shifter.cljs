@@ -16,13 +16,6 @@
 (defn make-row []
   (mapv cell-data (range 5)))
 
-(defn make-grid [sx sy data-fn]
-  (mapv (fn [y]
-          (mapv (fn [x]
-                  (data-fn x y))
-                (range sx)))
-        (range sy)))
-
 (defn get-column [index grid]
   (reduce (fn [prev item]
             (conj prev (nth item index)))
@@ -37,16 +30,22 @@
 (defn get-row [idx grid]
   (nth grid idx))
 
-(defn rotate-left [n coll]
+(defn rotate [n coll]
   (let [c (mod n (count coll))]
     (into []
           (concat (drop c coll) (take c coll)))))
 
-(defn rotate-right [n coll]
-  (rotate-left (- n) coll))
+(defn rotate-left [coll]
+  (rotate 1 coll))
+
+(defn rotate-right [coll]
+  (rotate -1 coll))
 
 (defn completed-value [coll]
-  (->> (range 1 6)
+  (->> coll
+       count
+       inc
+       (range 1)
        (map (fn [i] (when (apply = i coll) i)))
        (remove nil?)
        first))
@@ -71,7 +70,7 @@
        (remove nil?)))
 
 (defn new-game []
-  {:grid (make-grid 5 5 cell-data)
+  {:grid (common/make-grid 5 5 cell-data)
    :row 2
    :col 2
    :win-total 4
@@ -82,130 +81,152 @@
                  4 0
                  5 0}
    :time 120
-   :game-over false
+   :game-over nil
    :running? false})
 
 (def game-state (reagent/atom (new-game)))
 
-(defn update-row [row-idx row]
-  (swap! game-state update :grid #(assoc % row-idx row)))
+(defn update-state! [state]
+  (swap! game-state merge state))
+
+(defn update-row [row-idx row grid]
+  (assoc grid row-idx row))
 
 (defn update-column [col-idx col grid]
-  (swap! game-state assoc :grid
-         (into []
-               (map-indexed
-                 (fn [idx row]
-                   (assoc row col-idx (nth col idx)))
-                 grid))))
+  (into []
+        (map-indexed
+          (fn [idx row]
+            (assoc row col-idx (nth col idx)))
+          grid)))
 
-(defn check-for-completions [grid]
-  (let [complete-cols (into {} (complete-columns grid))
+(defn replace-complete-cols [complete-cols grid]
+  (reduce (fn [prev [idx _]]
+            (update-column idx (make-row) prev))
+          grid
+          complete-cols))
+
+(defn replace-complete-rows [complete-rows grid]
+  (reduce (fn [prev [idx _]]
+            (update-row idx (make-row) prev))
+          grid
+          complete-rows))
+
+(defn update-completions [completions complete-vals]
+  (reduce (fn [prev i]
+            (update prev i inc))
+          completions
+          complete-vals))
+
+(defn check-for-completionsX [state]
+  (let [{:keys [completions grid]} state
+        complete-cols (into {} (complete-columns grid))
         complete-rows (into {} (complete-rows grid))
-        complete-vals (concat (vals complete-rows) (vals complete-cols))
-        updated-completions (reduce (fn [prev i]
-                                      (update prev i inc))
-                                    (:completions @game-state)
-                                    complete-vals)]
-    (swap! game-state assoc :completions updated-completions)
+        complete-vals (concat (vals complete-rows) (vals complete-cols))]
+    (-> state
+        (assoc :grid (->> grid
+                          (replace-complete-cols complete-cols)
+                          (replace-complete-rows complete-rows)))
+        (assoc :completions (update-completions completions complete-vals)))))
 
-    (when (seq complete-cols)
-      (doseq [[idx _] complete-cols]
-        (update-column idx (make-row) (:grid @game-state))))
-    (when (seq complete-rows)
-      (doseq [[idx _] complete-rows]
-        (update-row idx (make-row))))))
+(defn check-win [state]
+  (if (every?
+        (fn [[_ v]]
+          (> v (:win-total state)))
+        (:completions state))
+    (assoc state :game-over :win)
+    state))
 
-(defn check-win []
-  (when
-    (every? (fn [[_ v]]
-              (> v (:win-total @game-state)))
-            (:completions @game-state))
-    (swap! game-state assoc :game-over :win)))
+(defn move-up [state]
+  (update state :row #(mod (dec %) 5)))
 
+(defn move-down [state]
+  (update state :row #(mod (inc %) 5)))
 
-(defn move-up! []
-  (swap! game-state update :row #(mod (dec %) 5)))
+(defn move-left [state]
+  (update state :col #(mod (dec %) 5)))
 
-(defn move-down! []
-  (swap! game-state update :row #(mod (inc %) 5)))
+(defn move-right [state]
+  (update state :col #(mod (inc %) 5)))
 
-(defn move-left! []
-  (swap! game-state update :col #(mod (dec %) 5)))
-
-(defn move-right! []
-  (swap! game-state update :col #(mod (inc %) 5)))
-
-
-(defn shift-down! []
+(defn shift-down [col grid]
   (update-column
-    (:col @game-state)
-    (rotate-right 1
-                  (get-column (:col @game-state)
-                              (:grid @game-state)))
-    (:grid @game-state)))
+    col
+    (rotate-right (get-column col grid))
+    grid))
 
-(defn shift-up! []
+(defn shift-up [col grid]
   (update-column
-    (:col @game-state)
-    (rotate-left 1
-                 (get-column (:col @game-state)
-                             (:grid @game-state)))
-    (:grid @game-state)))
+    col
+    (rotate-left (get-column col grid))
+    grid))
 
-(defn shift-left! []
+(defn shift-left [row grid]
   (update-row
-    (:row @game-state)
-    (rotate-left 1
-                 (get-row (:row @game-state)
-                          (:grid @game-state)))))
+    row
+    (rotate-left (get-row row grid))
+    grid))
 
-(defn shift-right! []
+(defn shift-right [row grid]
   (update-row
-    (:row @game-state)
-    (rotate-right 1
-                  (get-row (:row @game-state)
-                           (:grid @game-state)))))
+    row
+    (rotate-right (get-row row grid))
+    grid))
+
+(defn shift-down! [state]
+  (let [{:keys [col grid]} state]
+    (update-state!
+      (-> state
+          (assoc :grid (shift-down col grid))
+          (check-for-completionsX)
+          check-win))))
+
+(defn shift-up! [state]
+  (let [{:keys [col grid]} state]
+    (update-state!
+      (-> state
+          (assoc :grid (shift-up col grid))
+          (check-for-completionsX)
+          check-win))))
+
+(defn shift-left! [state]
+  (let [{:keys [row grid]} state]
+    (update-state!
+      (-> state
+          (assoc :grid (shift-left row grid))
+          (check-for-completionsX)
+          check-win))))
+
+(defn shift-right! [state]
+  (let [{:keys [row grid]} state]
+    (update-state!
+      (-> state
+          (assoc :grid (shift-right row grid))
+          (check-for-completionsX)
+          check-win))))
 
 (defn move! [key]
   (case key
     40 ;; down
-    (move-down!)
-    #_(shift-down!)
+    (update-state! (move-down @game-state))
     38 ;; up
-    (move-up!)
-    #_(shift-up!)
+    (update-state! (move-up @game-state))
     37 ;; left
-    (move-left!)
-    #_(shift-left!)
+    (update-state! (move-left @game-state))
     39 ;; right
-    (move-right!)
-    #_(shift-right!)
+    (update-state! (move-right @game-state))
     nil))
 
 (defn shift! [key]
-  (let [grid (:grid @game-state)]
-    (case key
-      40 ;; down
-      (do
-        (shift-down!)
-        (check-for-completions grid)
-        (check-win))
-      38 ;; up
-      (do
-        (shift-up!)
-        (check-for-completions grid)
-        (check-win))
-      37 ;; left
-      (do
-        (shift-left!)
-        (check-for-completions grid)
-        (check-win))
-      39 ;; right
-      (do
-        (shift-right!)
-        (check-for-completions grid)
-        (check-win))
-      nil)))
+  (case key
+    40 ;; down
+    (shift-down! @game-state)
+    38 ;; up
+    (shift-up! @game-state)
+    37 ;; left
+    (shift-left! @game-state)
+    39 ;; right
+    (shift-right! @game-state)
+    nil))
 
 (defn on-keydown! [e]
   (let [key (.-keyCode e)]
