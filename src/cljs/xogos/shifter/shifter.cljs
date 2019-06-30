@@ -51,21 +51,23 @@
        (remove nil?)
        first))
 
+(defn get-completions [coll]
+  (map-indexed
+    (fn [idx item]
+      (let [complete (completed-value (map :value item))]
+        (when complete
+          [idx complete])))
+    coll))
+
 (defn complete-columns [grid]
   (->> grid
        columns
-       (map-indexed (fn [idx column]
-                      (let [complete (completed-value (map :value column))]
-                        (when complete
-                          [idx complete]))))
+       get-completions
        (remove nil?)))
 
 (defn complete-rows [grid]
   (->> grid
-       (map-indexed (fn [idx row]
-                      (let [complete (completed-value (map :value row))]
-                        (when complete
-                          [idx complete]))))
+       get-completions
        (remove nil?)))
 
 (defn new-game []
@@ -181,28 +183,29 @@
     nil))
 
 (defn shift! [key]
-  (case key
-    40 ;; down
-    (do
-      (shift-down!)
-      (check-for-completions (:grid @game-state))
-      (check-win))
-    38 ;; up
-    (do
-      (shift-up!)
-      (check-for-completions (:grid @game-state))
-      (check-win))
-    37 ;; left
-    (do
-      (shift-left!)
-      (check-for-completions (:grid @game-state))
-      (check-win))
-    39 ;; right
-    (do
-      (shift-right!)
-      (check-for-completions (:grid @game-state))
-      (check-win))
-    nil))
+  (let [grid (:grid @game-state)]
+    (case key
+      40 ;; down
+      (do
+        (shift-down!)
+        (check-for-completions grid)
+        (check-win))
+      38 ;; up
+      (do
+        (shift-up!)
+        (check-for-completions grid)
+        (check-win))
+      37 ;; left
+      (do
+        (shift-left!)
+        (check-for-completions grid)
+        (check-win))
+      39 ;; right
+      (do
+        (shift-right!)
+        (check-for-completions grid)
+        (check-win))
+      nil)))
 
 (defn on-keydown! [e]
   (let [key (.-keyCode e)]

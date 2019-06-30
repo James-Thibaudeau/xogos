@@ -23,12 +23,13 @@
      [:rect {:x 110 :y 100 :width 25 :height 55}]]))
 
 (defn generate-people [n m]
-  (into {} (map (fn [[k _]]
-                  [k (mapv (fn [_]
-                             {:destination (inc (rand-int 5))
-                              :id (random-uuid)})
-                           (range n))])
-                m)))
+  (into {}
+        (map (fn [[k _]]
+               [k (mapv (fn [_]
+                          {:destination (inc (rand-int 5))
+                           :id (random-uuid)})
+                        (range n))])
+             m)))
 
 (defn new-game []
   {:floors (generate-people 5 {1 []
