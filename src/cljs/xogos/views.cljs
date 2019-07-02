@@ -5,6 +5,7 @@
     [re-frame.core :as re-frame]
     [xogos.events :as events]
     [xogos.subs :as subs]
+    [xogos.store.views :as sv]
     [xogos.brick-click.brick-click :as bc]
     [xogos.elevator.elevator :as elevator]
     [xogos.shifter.shifter :as shifter]
@@ -12,31 +13,32 @@
 
 (def games [:brick-click :shifter :elevator :tic-tac-toe])
 
-(defn nav-bar []
-  (let [menu-open? (reagent/atom false)]
-    (fn []
-      [:nav.navbar
-       [:div.container
-        [:div.navbar-brand
-         [:i {:class "fas fa-gamepad fa-3x"}]
-         [:span.navbar-burger.burger
-          {:on-click #(swap! menu-open? not)}
-          [:span]
-          [:span]
-          [:span]]]
-        [:div.navbar-menu {:class (when @menu-open? "is-active")}
-         [:div.navbar-end
-          (map (fn [g]
-                 ^{:key g} [:a.navbar-item
-                            {:on-click #(re-frame/dispatch [::events/set-active-panel g])}
-                            (s/capitalize (name g))])
-               games)]]]])))
+(defn nav-bar [state]
+  [:nav.navbar
+   [:div.container
+    [:div.navbar-brand
+     [:i {:class "fas fa-gamepad fa-3x"}]
+     [:span.navbar-burger.burger
+      {:on-click #(swap! state update :menu-open not)}
+      [:span]
+      [:span]
+      [:span]]]
+    [:div.navbar-menu {:class (when (:menu-open @state) "is-active")}
+     [:div.navbar-end
+      [:a.navbar-item {:on-click #(swap! state update :store-open not)} "Store"]
+      (map (fn [g]
+             ^{:key g} [:a.navbar-item
+                        {:on-click #(re-frame/dispatch [::events/set-active-panel g])}
+                        (s/capitalize (name g))])
+           games)]]]])
 
 (defn games-panel []
-  (let [game (re-frame/subscribe [::subs/active-panel])]
+  (let [game (re-frame/subscribe [::subs/active-panel])
+        state (reagent/atom {:store-open nil
+                             :menu-open nil})]
     (fn []
       [:div.container.is-fluid
-       [nav-bar]
+       [nav-bar state]
        (case @game
          :brick-click
          [bc/brick-click]
@@ -45,7 +47,8 @@
          :elevator
          [elevator/elevator]
          :tic-tac-toe
-         [ttt/tic-tac-toe])])))
+         [ttt/tic-tac-toe])
+       [sv/store (:store-open @state) #(swap! state assoc :store-open nil)]])))
 
 (defn user-panel []
   (let [user-name (reagent/atom nil)]

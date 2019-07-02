@@ -4,7 +4,8 @@
                  [reagent "0.8.1"]
                  [re-frame "0.10.6"]
                  [secretary "1.2.3"]
-                 [cljsjs/howler "2.0.5-0"]]
+                 [cljsjs/howler "2.0.5-0"]
+                 [bulma-cljs "0.1.4"]]
 
   :repl-options {:init-ns dev.user
                  :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}

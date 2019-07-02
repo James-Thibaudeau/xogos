@@ -2,7 +2,8 @@
   (:require
     [reagent.core :as reagent]
     [cljsjs.howler]
-    [xogos.common.common :as common]))
+    [xogos.common.common :as common]
+    [xogos.common.loot :as loot]))
 
 (declare game-state)
 
@@ -20,64 +21,19 @@
 (def minable-loot [:bone :uranium :bronze-ankh :silver-ankh
                    :gold-ankh :money :bronze-coins :silver-coins])
 
-(def buyable-loot {:wood-hammer 5
-                   :bronze-hammer 15
-                   :silver-hammer 35
-                   :gold-hammer 100})
-
-(def loot-style-map {:uranium {:class "fa-atom"
-                               :color "chartreuse"}
-                     :bronze-ankh {:class "fa-ankh"
-                                   :color "#B08D57"}
-                     :silver-ankh {:class "fa-ankh"
-                                   :color "silver"}
-                     :gold-ankh {:class "fa-ankh"
-                                 :color "gold"}
-                     :money {:class "fa-money-bill-wave"
-                             :color "green"}
-                     :bronze-coins {:class "fa-coins"
-                                    :color "#B08D57"}
-                     :silver-coins {:class "fa-coins"
-                                    :color "silver"}
-                     :gold-coins {:class "fa-coins"
-                                  :color "gold"}
-                     :bone {:class "fa-bone"
-                            :color "grey"}
-                     :wood-hammer {:class "fa-hammer"
-                                   :color "brown"}
-                     :bronze-hammer {:class "fa-hammer"
-                                     :color "#B08D57"}
-                     :silver-hammer {:class "fa-hammer"
-                                     :color "silver"}
-                     :gold-hammer {:class "fa-hammer"
-                                   :color "gold"}})
-
 (defn random-loot []
   (when (rand-nth [nil nil true])
     {:type (rand-nth minable-loot)
      :value 1}))
-
-(defn loot-color [key]
-  (get-in loot-style-map [key :color]))
-
-(defn loot-class [key]
-  (get-in loot-style-map [key :class]))
 
 (defn brick [_ _]
   {:id (random-uuid)
    :clicks-left 1
    :loot (random-loot)})
 
-
-
 (def game-state (reagent/atom {:grid (common/make-grid 10 10 brick)
-                               :looted-bricks 0
                                :level 1
                                :inventory {}
-                               :store-inventory {:wood-hammer 1
-                                                 :bronze-hammer 1
-                                                 :silver-hammer 1
-                                                 :gold-hammer 1}
                                :sound? true}))
 
 (defn level-complete? [grid]
@@ -154,16 +110,16 @@
    (if (> clicks-left 0)
      [:img {:src "img/brick.svg"}]
      (when (:value loot)
-       [:i {:class ["fas" (loot-class (:type loot)) "fa-2x"]
-            :style {:color (loot-color (:type loot))}}]))])
+       [:i {:class ["fas" (loot/loot-class (:type loot)) "fa-2x"]
+            :style {:color (loot/loot-color (:type loot))}}]))])
 
 (defn inventory-item [k v]
   [:div {:style {:display "flex"
                  :align-items "center"
                  :justify-content "end"}}
    [:div
-    [:i {:class ["fas" (loot-class k) "fa-2x"]
-         :style {:color (loot-color k)}}]]
+    [:i {:class ["fas" (loot/loot-class k) "fa-2x"]
+         :style {:color (loot/loot-color k)}}]]
    [:div {:style {:flex "1"
                   :text-align "center"}}
     [:span "x" v]]])
@@ -173,25 +129,6 @@
    [:h3.subtitle "Inventory"]
    (map (fn [[k v]]
           ^{:key k} [inventory-item k v])
-        items)])
-
-(defn store-item [k v]
-  [:div {:style {:display "flex"
-                 :align-items "center"
-                 :justify-content "end"
-                 :height "100%"}}
-   [:div
-    [:i {:class ["fas" (loot-class k) "fa-2x"]
-         :style {:color (loot-color k)}}]]
-   [:div {:style {:flex "1"
-                  :text-align "center"}}
-    [:span "Cost: " (get buyable-loot k)]]])
-
-(defn store-inventory [items]
-  [:div
-   [:h3.subtitle "Store"]
-   (map (fn [[k v]]
-          ^{:key k} [store-item k v])
         items)])
 
 (defn game-board [grid]
@@ -229,6 +166,4 @@
     [:div.column
      [game-board (:grid @game-state)]]
     [:div.column
-     [inventory (:inventory @game-state)]]
-    [:div.column
-     [store-inventory (:store-inventory @game-state)]]]])
+     [inventory (:inventory @game-state)]]]])

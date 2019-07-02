@@ -23,8 +23,13 @@
     {:db (assoc db :user user)
      :save-user-local-storage user}))
 
+(defn update-inventory [db [_ inventory]]
+  (merge db inventory))
+
 (re-frame/reg-fx :save-user-local-storage save-user-local-storage)
 (re-frame/reg-event-db ::initialize-db initialize-db)
 (re-frame/reg-event-db ::set-active-panel set-active-panel)
 (re-frame/reg-event-db ::set-user set-user)
 (re-frame/reg-event-fx ::create-user create-user)
+
+(re-frame/reg-event-db ::update-inventory update-inventory)
