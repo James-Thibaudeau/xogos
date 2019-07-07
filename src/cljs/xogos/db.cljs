@@ -1,6 +1,6 @@
 (ns xogos.db)
 
 (def default-db
-  {:active-panel :brick-click
+  {:active-panel :breakout
    :user nil
    :inventory {}})

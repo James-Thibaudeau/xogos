@@ -21,7 +21,9 @@
   ;; --------------------
   ;; define routes here
   (defroute "/" []
-            (re-frame/dispatch [::events/set-active-panel :brick-click]))
+            (re-frame/dispatch [::events/set-active-panel :breakout]))
+  (defroute "/breakout" []
+            (re-frame/dispatch [::events/set-active-panel :breakout]))
   (defroute "/brick-click" []
             (re-frame/dispatch [::events/set-active-panel :brick-click]))
   (defroute "/elevator" []
