@@ -272,7 +272,6 @@
   (let [running? (ratom/make-reaction #(:running? @game-state))
         game-over? (ratom/make-reaction #(:game-over? @game-state))]
     (fn []
-      (js/console.log :render-main)
       [:div.container
        [:h1.title "Breakout"]
        (if @running?
