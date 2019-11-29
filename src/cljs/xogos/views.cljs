@@ -10,9 +10,17 @@
     [xogos.elevator.elevator :as elevator]
     [xogos.shifter.shifter :as shifter]
     [xogos.tic-tac-toe.tic-tac-toe :as ttt]
-    [xogos.breakout.breakout :as bo]))
+    [xogos.breakout.breakout :as bo]
+    [xogos.trivia.trivia :as trivia]
+    [xogos.card-battle.card-battle :as card-battle]))
 
-(def games [:breakout :brick-click :shifter :elevator :tic-tac-toe])
+(def games [:card-battle
+            :trivia
+            :breakout
+            :brick-click
+            :shifter
+            :elevator
+            :tic-tac-toe])
 
 (defn nav-bar [state]
   [:nav.navbar
@@ -41,6 +49,10 @@
       [:div.container.is-fluid
        [nav-bar state]
        (case @game
+         :card-battle
+         [card-battle/card-battle]
+         :trivia
+         [trivia/trivia]
          :breakout
          [bo/breakout]
          :brick-click
