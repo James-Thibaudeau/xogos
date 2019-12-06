@@ -78,38 +78,91 @@
                   :else :tie)]
     (swap! state assoc :winner result)))
 
+(defn change-turn! []
+  (if (= (-> @state :game :turn) :player-1)
+    (set-turn :player-2)
+    (set-turn :player-1)))
+
+(defn process-actions []
+  (let [{p1-a :attacker p1-d :defender} (:player-1 @state)
+        {p2-a :attacker p2-d :defender} (:player-2 @state)]
+    ;; TODO: finish this fn
+    ))
+
 (defn select-card [card]
   (let [{:keys [turn phase]} (:game @state)
         player (-> card :player-id)]
     (when (= player turn)
       (case phase
         :select-attacker
-        (update-attacker player card)
+        (do
+          (update-attacker player card)
+          (next-phase phase))
         :select-defender
-        (update-defender player card)
-        :idle nil))))
+        (do
+          (update-defender player card)
+          (next-phase phase))
+        :idle
+        (process-actions)))))
 
 (defn resolve-battle [attack defense]
   (if (>= attack defense)
     :attacker-win
     :defender-win))
 
-(defn card [{:keys [attack defense] :as card}]
-  (js/console.log card)
+(defn card [{:keys [attack defense player-id] :as card} turn]
+  (js/console.log card turn)
   [:div {:on-click #(select-card card)
          :style {:display "inline-block" :padding 5 :border "1px solid"}}
-   [:div {:style {:color "orange"}} attack]
-   [:div {:style {:color "blue"}} defense]])
+   (if (= turn player-id)
+     [:<>
+      [:div {:style {:color "orange"}} attack]
+      [:div {:style {:color "blue"}} defense]]
+     [:<>
+      [:div "X"]
+      [:div "X"]])])
 
 (defn card-battle []
   [:div.container.is-fluid
    [:h1.title "Card Battle"]
    [:div (str @state)]
    [:button {:on-click #(start-game)} "Start Game"]
+
    [:div
     [:h2.title "Player 2"]
-    (map (fn [c] ^{:key (:id c)} [card c]) (-> @state :player-2 :board))]
+    (map (fn [c] ^{:key (:id c)} [card c (-> @state :game :turn)]) (-> @state :player-2 :board))
+    [:div
+     [:div
+      [:p "Attacker"]
+      [:div (or (-> @state
+                    :player-2
+                    :attacker
+                    str)
+                nil)]]
+     [:div
+      [:p "Defender"]
+      [:div (or (-> @state
+                    :player-2
+                    :defender
+                    str)
+                nil)]]]]
 
    [:div
     [:h2.title "Player 1"]
-    (map (fn [c] ^{:key (:id c)} [card c]) (-> @state :player-1 :board))]])
+    (map (fn [c] ^{:key (:id c)} [card c (-> @state :game :turn)]) (-> @state :player-1 :board))
+    [:div
+     [:div
+      [:p "Attacker"]
+      [:div (or (->
+                  @state
+                  :player-1
+                  :attacker
+                  str)
+                nil)]]
+     [:div
+      [:p "Defender"]
+      [:div (or (-> @state
+                    :player-1
+                    :defender
+                    str)
+                nil)]]]]])
